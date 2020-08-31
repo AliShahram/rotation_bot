@@ -19,18 +19,18 @@ class TaskManager:
         pass
 
 
-    def processInput(self, teams_id, name):
-        """This method takes teams_id and name as input,
+    def processInput(self, team_code, name):
+        """This method takes team_code and name as input,
         looks up if the team exists, and if there is a task with the given name.
         If either don't exist, it returns the appropriate error
         else it return the team and task objects
         """
-        team = Teams.query.filter_by(teams_id=teams_id).first()
+        team = Teams.query.filter_by(team_code=team_code).first()
         if not team:
             return {'status': 401,
                     'message': 'Team does not exist'}
 
-        task = Tasks.query.filter_by(teams_id=team.id, name=name).first()
+        task = Tasks.query.filter_by(team_codee=team.id, name=name).first()
         if not task:
             return {'status': 401,
                     'message': 'Task does not exist'}
@@ -42,7 +42,7 @@ class TaskManager:
             @string task name
             @string task members
         """
-        team = Teams.query.filter_by(teams_id=data['teams_id']).first()
+        team = Teams.query.filter_by(team_code=data['team_code']).first()
         if not team:
             return {'status': 401,
                     'message': 'Team does not exist'}
@@ -64,24 +64,51 @@ class TaskManager:
                 'val': val}
 
 
-    def deleteTask(self, teams_id, name):
-        team, task = self.processInput(teams_id, name)
+    def deleteTask(self, team_code, name):
+        team = Teams.query.filter_by(team_code=team_code).first()
+        if not team:
+            return {'status': 401,
+                    'message': 'Team does not exist'}
+
+        task = Tasks.query.filter_by(teams_id=team.id, name=name).first()
+        if not task:
+            return {'status': 401,
+                    'message': 'Task does not exist'}
+
         db.session.delete(task)
         db.session.commit()
-        return {'status': 200,
+        return {'status': 410,
                 'message': 'Successfuly deleted item'}
 
 
-    def getTask(self, teams_id, name):
-        team, task = self.processInput(teams_id, name)
+    def getTask(self, team_code, name):
+        team = Teams.query.filter_by(team_code=team_code).first()
+        if not team:
+            return {'status': 401,
+                    'message': 'Team does not exist'}
+
+        task = Tasks.query.filter_by(teams_id=team.id, name=name).first()
+        if not task:
+            return {'status': 401,
+                    'message': 'Task does not exist'}
+
         return {'status': 200,
                 'message': 'Successfuly retrieved item',
                 'val': task.items}
 
 
 
-    def popItem(self, teams_id, name):
-        team, task = self.processInput(teams_id, name)
+    def popItem(self, team_code, name):
+        team = Teams.query.filter_by(team_code=team_code).first()
+        if not team:
+            return {'status': 401,
+                    'message': 'Team does not exist'}
+
+        task = Tasks.query.filter_by(teams_id=team.id, name=name).first()
+        if not task:
+            return {'status': 401,
+                    'message': 'Task does not exist'}
+
         items = task.items.split(',')
 
         popped_item = items.pop(0)

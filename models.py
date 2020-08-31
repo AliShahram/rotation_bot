@@ -7,7 +7,7 @@ from extensions import db
 
 class Teams(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    teams_id = db.Column(db.String(124), unique=True, nullable=False)
+    team_code = db.Column(db.String(124), unique=True, nullable=False)
     team_domain = db.Column(db.String(124), unique=False, nullable=True)
 
     def __repr__(self):

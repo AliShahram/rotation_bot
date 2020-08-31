@@ -9,7 +9,7 @@ from extensions import *
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:''@localhost/rotation'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql://root:''@localhost/rotation_bot'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
@@ -18,8 +18,8 @@ tm = TaskManager()
 
 lists = dict()
 
-new_list_help = """Here's an example: `/newlist nums [1,2,3,4,5]`"""
-next_help = """Example usage: `/next nums` \n (This command will pop the first item off the list called `nums`)"""
+new_list_help = """Here's an example: `/newq nums [1,2,3,4,5]`"""
+next_help = """Example usage: `/nextnq nums` \n (This command will pop the first item off the list called `nums`)"""
 
 class InputError(Exception):
     pass
@@ -35,26 +35,65 @@ def pattern_match_list(string):
 
 
 def parse_args(args):
-    # TODO: listname cannot have space in it
-    # FIXME: trailing comma fucks up the list
 
-    arg1, arg2 = args.split(" ", 1)
+    arg1 = None
+    arg2 = None
+    i = 0
 
-    if arg1.startswith("["):
-        # Possible case: command arg2 (forgot arg1)
-        raise ArgumentError("Forgot list name")
+    while i < len(args):
+        char = args[i]
+        if char == "[":
+            arg1 = args[:i]
+            arg2 = args[i:]
+            break
+        else:
+            i += 1
 
-    arg2 = pattern_match_list(arg2)
-    # TODO: delimiter (comma). Check if the comma is not in there
-    arg2 = [i for i in arg2.split(",")]
+    if arg1 is None or arg2 is None:
+        raise ArgumentError(next_help)
 
-    return arg1, arg2
+    # Remove possible space in both sides
+    arg1 = arg1.strip()
+    arg2 = arg2.strip()
+
+    # Clean list of elements
+    result = ""
+    group_flag = False
+    i, j = 0, 0
+
+    while j < len(arg2) - 1:
+        if arg2[j] == '(':
+            group_flag = True
+            i = j
+
+        if arg2[j] == ')':
+            group_flag = False
+            elem = arg2[i:j+1]
+            elem = elem.strip()
+            print(elem)
+            result += elem
+
+            i = j
+
+
+        if arg2[j] == ',' and group_flag is False:
+            elem = arg2[i+1:j]
+            elem = elem.strip()
+            print(elem)
+            result += elem + ","
+            i = j
+        j += 1
+    return arg1, result[:-1]
+
 
 @app.route("/createTask", methods=["POST"])
 def createTask():
     payload = parse_qs(request.get_data().decode("utf-8"))
-    pprint(payload)
+    # pprint(payload)
+
     text = payload.get("text")
+
+    task_name, task_items = parse_args(text[0])
 
     message, data = "", ":smile:"
     if text:
@@ -70,10 +109,11 @@ def createTask():
         except ArgumentError as err:
             message = f"{err}"
         else:
-            data = {'teams_id': payload.get("team_id"),
+            data = {'team_code': payload.get("team_id"),
                     'name': task_name,
                     'items': task_items}
             rslt = tm.createTask(data)
+            message = rslt['message']
     else:
         message = f"Got 0 arguments. {new_list_help}"
 
@@ -84,20 +124,13 @@ def createTask():
             {
                 "type": "section",
                 "text": {
-                    "text": rslt['message'],
-                    "type": "mrkdwn",
-                },
-       # Add a conditional before returning the second field
-              "fields": [
-                {
-                  "type": "mrkdwn",
-                  "text": None
+                    "text": message,
+                    "type": "mrkdwn"
                 }
-            ]
-        }
-
+            }
         ]
     }
+
 
     print(rv)
     return jsonify(rv)
@@ -144,19 +177,24 @@ def popitem():
 
 @app.route("/test", methods=["GET"])
 def test():
-    data = {'teams_id': '1',
-            'name': 'peer_review',
-            'items': 'ali, shaown, jon, mike'}
+    # data = {'team_code': 'T017N93ULR0',
+    #         'name': 'peer_review',
+    #         'items': 'ali, shaown, jon, mike'}
+    #
+    # tm = TaskManager()
+    #
+    # rslt = tm.createTask(data)
+    # rslt = tm.popItem('T017N93ULR0', 'peer_review')
+    # rslt = tm.deleteTask('T017N93ULR0', 'peer_review')
+    # rslt = tm.getTask('T017N93ULR0', 'peer_review')
 
-    tm = TaskManager()
 
-    rslt = tm.createTask(data)
-    # rslt = tm.popItem('1', 'peer_review')
-    # rslt = tm.deleteTask(1, 'peer_review')
-    rslt = tm.getTask(1, 'peer_review')
+    data = "   test   [(1,2),3,4,5,6]   "
 
-    print(rslt)
-    return 'asdf'
+    parse_args(data)
+    #
+    # print(rslt)
+    return data
 
 if __name__ == "__main__":
     app.run(port=4390)
