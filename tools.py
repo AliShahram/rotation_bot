@@ -78,7 +78,7 @@ class TaskManager:
         db.session.delete(task)
         db.session.commit()
         return {'status': 410,
-                'message': 'Successfuly deleted item'}
+                'message': 'Successfuly deleted task'}
 
 
     def getTask(self, team_code, name):
@@ -93,7 +93,7 @@ class TaskManager:
                     'message': 'Task does not exist'}
 
         return {'status': 200,
-                'message': 'Successfuly retrieved item',
+                'message': '%s: %s' % (name, task.items),
                 'val': task.items}
 
 
@@ -118,5 +118,5 @@ class TaskManager:
         db.session.commit()
 
         return {'status': 200,
-                'message': 'Successfuly rotated items',
+                'message': 'Next off %s is %s' % (name, popped_item),
                 'val': popped_item}

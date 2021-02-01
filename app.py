@@ -1,4 +1,5 @@
 import json
+import re
 from urllib.parse import parse_qs
 
 from flask import Flask, jsonify, request
@@ -34,6 +35,16 @@ def pattern_match_list(string):
     return string[1:-1]
 
 
+def custom_regex_cleaning(string):
+    punctuation = """!\"#$%&'*+-/:;<=>?@[\\]^_`{|}~."""
+    cleaned = ""
+    for i in string:
+        if i not in punctuation:
+            cleaned += i
+    cleaned = cleaned.strip()
+    return cleaned
+
+
 def parse_args(args):
 
     arg1 = None
@@ -61,7 +72,7 @@ def parse_args(args):
     group_flag = False
     i, j = 0, 0
 
-    while j < len(arg2) - 1:
+    while j < len(arg2):
         if arg2[j] == '(':
             group_flag = True
             i = j
@@ -69,31 +80,33 @@ def parse_args(args):
         if arg2[j] == ')':
             group_flag = False
             elem = arg2[i:j+1]
-            elem = elem.strip()
-            print(elem)
-            result += elem
-
+            result += custom_regex_cleaning(elem)
             i = j
-
 
         if arg2[j] == ',' and group_flag is False:
             elem = arg2[i+1:j]
-            elem = elem.strip()
-            print(elem)
+            elem = custom_regex_cleaning(elem)
             result += elem + ","
             i = j
+
+        if arg2[j] == ']':
+            elem = arg2[i+1:j]
+            result += custom_regex_cleaning(elem)
+            i = j
+
         j += 1
-    return arg1, result[:-1]
+
+    return arg1, result
 
 
-@app.route("/createTask", methods=["POST"])
-def createTask():
+@app.route("/newQ", methods=["POST"])
+def newQ():
     payload = parse_qs(request.get_data().decode("utf-8"))
     # pprint(payload)
 
     text = payload.get("text")
 
-    task_name, task_items = parse_args(text[0])
+    # task_name, task_items = parse_args(text[0])
 
     message, data = "", ":smile:"
     if text:
@@ -131,15 +144,13 @@ def createTask():
         ]
     }
 
-
     print(rv)
     return jsonify(rv)
 
 
-@app.route("/popitem", methods=["POST"])
-def popitem():
+@app.route("/nextNQ", methods=["POST"])
+def nextNQ():
     payload = parse_qs(request.get_data().decode("utf-8"))
-    pprint(payload)
     raw_args = payload.get("text")
 
     try:
@@ -148,32 +159,63 @@ def popitem():
         # When passed nothing as args
         message = f"`list_name` is a required parameter. {next_help}"
     else:
-        try:
-            found_list = lists[list_name]
-        except KeyError:
-            message = f"No such list named `{list_name}` found."
-
-            available_lists = lists.keys()
-            if len(available_lists) == 0:
-                message += f" Create a list first. {new_list_help}"
-
-            # The following should be admin function
-            #else:
-            #    available_lists = "".join(list(available_lists))
-            #    message += f"These are the current lists for your workspace. {available_lists}"
-            # print(type(available_lists), len(available_lists))
-        else:
-            popped = found_list.pop(0)
-            found_list.append(popped)
-            message = f"next off `{list_name}` is @{popped}"
+        team_code = payload.get("team_id")
+        rslt = tm.popItem(team_code, list_name)
 
     rv = {
         "response_type": "in_channel",
-        "text": message
+        "text": rslt['message']
     }
-
-
     return jsonify(rv)
+
+
+
+@app.route("/showQ", methods=["POST"])
+def showQ():
+    payload = parse_qs(request.get_data().decode("utf-8"))
+    raw_args = payload.get("text")
+
+    print(raw_args)
+
+    try:
+        list_name = raw_args[0]
+    except TypeError:
+        # When passed nothing as args
+        message = f"`list_name` is a required parameter. {next_help}"
+    else:
+        team_code = payload.get("team_id")
+        rslt = tm.getTask(team_code, list_name)
+        rv = {
+            "response_type": "in_channel",
+            "text": rslt['message']
+        }
+        return jsonify(rv)
+
+
+@app.route("/deleteQ", methods=["POST"])
+def deleteQ():
+    payload = parse_qs(request.get_data().decode("utf-8"))
+    raw_args = payload.get("text")
+
+    print(raw_args)
+
+    try:
+        list_name = raw_args[0]
+    except TypeError:
+        # When passed nothing as args
+        message = f"`list_name` is a required parameter. {next_help}"
+    else:
+        team_code = payload.get("team_id")
+        rslt = tm.deleteTask(team_code, list_name)
+        rv = {
+            "response_type": "in_channel",
+            "text": rslt['message']
+        }
+        return jsonify(rv)
+
+
+
+
 
 @app.route("/test", methods=["GET"])
 def test():
@@ -189,9 +231,12 @@ def test():
     # rslt = tm.getTask('T017N93ULR0', 'peer_review')
 
 
-    data = "   test   [(1,2),3,4,5,6]   "
+    data = "   test   [(1,2),/3,4,5,6,7]   "
 
-    parse_args(data)
+    data = parse_args(data)
+
+    print(data)
+
     #
     # print(rslt)
     return data
