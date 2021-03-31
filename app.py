@@ -105,9 +105,6 @@ def newQ():
     # pprint(payload)
 
     text = payload.get("text")
-
-    # task_name, task_items = parse_args(text[0])
-
     message, data = "", ":smile:"
     if text:
         args = text[0]
@@ -146,6 +143,7 @@ def newQ():
 
     print(rv)
     return jsonify(rv)
+
 
 
 @app.route("/nextNQ", methods=["POST"])
@@ -192,6 +190,7 @@ def showQ():
         return jsonify(rv)
 
 
+
 @app.route("/deleteQ", methods=["POST"])
 def deleteQ():
     payload = parse_qs(request.get_data().decode("utf-8"))
@@ -214,32 +213,5 @@ def deleteQ():
         return jsonify(rv)
 
 
-
-
-
-@app.route("/test", methods=["GET"])
-def test():
-    # data = {'team_code': 'T017N93ULR0',
-    #         'name': 'peer_review',
-    #         'items': 'ali, shaown, jon, mike'}
-    #
-    # tm = TaskManager()
-    #
-    # rslt = tm.createTask(data)
-    # rslt = tm.popItem('T017N93ULR0', 'peer_review')
-    # rslt = tm.deleteTask('T017N93ULR0', 'peer_review')
-    # rslt = tm.getTask('T017N93ULR0', 'peer_review')
-
-
-    data = "   test   [(1,2),/3,4,5,6,7]   "
-
-    data = parse_args(data)
-
-    print(data)
-
-    #
-    # print(rslt)
-    return data
-
 if __name__ == "__main__":
-    app.run(port=4390)
+    app.run(host='0.0.0.0', debug=True)

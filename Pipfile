@@ -4,13 +4,13 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-flask = "==1.0.0"
-flask-sqlalchemy = "*"
-pymysql = "*"
 mysqlclient = "*"
 pytest = "*"
+Flask = "==1.0.0"
+Flask-SQLAlchemy = "*"
+PyMySQL = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.7"
+python_version = "3.6"
