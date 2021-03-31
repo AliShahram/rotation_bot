@@ -29,9 +29,9 @@ Email: ssalek14@earlham.edu
 
   A few helpful links:
   
-  Slack app development: https://api.slack.com/start/overview
+   Slack app development: https://api.slack.com/start/overview
 
-  Ngrok for local slack development: https://api.slack.com/tutorials/tunneling-with-ngrok
+   Ngrok for local slack development: https://api.slack.com/tutorials/tunneling-with-ngrok
 
 
 
